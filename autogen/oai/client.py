@@ -277,7 +277,21 @@ class OpenAIClient:
             params["stream"] = False
             response = completions.create(**params)
 
+        self._compatible_usage(response)
         return response
+
+    def _compatible_usage(self, response: ChatCompletion) -> None:
+        """Compatible with some proxy clients that don't have usage attribute or different format."""
+        usage = response.usage
+        if usage.prompt_tokens is None:
+            if hasattr(usage, "promptTokens"):
+                usage.prompt_tokens = usage.promptTokens
+        if usage.completion_tokens is None:
+            if hasattr(usage, "completionTokens"):
+                usage.completion_tokens = usage.completionTokens
+        if usage.total_tokens is None:
+            if hasattr(usage, "totalTokens"):
+                usage.total_tokens = usage.totalTokens
 
     def cost(self, response: Union[ChatCompletion, Completion]) -> float:
         """Calculate the cost of the response."""
